@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Configura tus Entradas</title>
+</head>
+<body style="background:#0b1122; color:white; font-family:Arial; text-align:center; padding-top:50px;">
+<h2>🎟️ Configura tus Boletos</h2>
+<div style="background:#16223f; display:inline-block; padding:30px; border-radius:10px; width:350px; text-align:left;">
+    <p><b>Película:</b> <span th:text="${peli}"></span></p>
+    <p><b>Cine:</b> <span th:text="${cine}"></span></p>
+    <hr style="border:0.5px solid #d10056;">
+    <form action="/finalizar" method="post">
+        <input type="hidden" name="peli" th:value="${peli}">
+        <input type="hidden" name="cine" th:value="${cine}">
+        <label>Tipo de Entrada (Aplica Factory):</label><br>
+        <select name="tipo" style="padding:10px; width:100%; margin-top:5px; background:#0b1122; color:white; border:1px solid #d10056;">
+            <option value="REGULAR">Adulto Regular - S/ 15.00</option>
+            <option value="NIÑO">Niño (Menor de 12) - S/ 11.00</option>
+            <option value="VIP">VIP Preferencial - S/ 25.00</option>
+        </select><br><br>
+        <button type="submit" style="background:#d10056; color:white; border:none; padding:12px; border-radius:20px; width:100%; font-weight:bold; cursor:pointer;">Confirmar Pago (Facade)</button>
+    </form>
+</div>
+</body>
+</html>

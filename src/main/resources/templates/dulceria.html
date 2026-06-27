@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine Scape - Dulcería Integrada</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ecf0f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .contenedor-general-dulceria {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 25px;
+            box-sizing: border-box;
+        }
+
+        /* Barra de Navegación de Categorías en Formato Horizontal Exacto */
+        .barra-navegacion-categorias {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #cfd8dc;
+            padding-bottom: 0px;
+            margin-bottom: 40px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .tab-categoria-link {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            min-width: 130px;
+            border-bottom: 4px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-categoria-link .icono-contenedor {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tab-categoria-link .icono-contenedor img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .tab-categoria-link span {
+            font-size: 13px;
+            font-weight: 700;
+            color: #546e7a;
+            text-align: center;
+        }
+
+        /* Marcador de Selección Activa color Corporativo Cine Scape */
+        .tab-categoria-link:hover, .tab-categoria-link.active {
+            border-bottom-color: #ff0055;
+        }
+
+        .tab-categoria-link.active span {
+            color: #ff0055;
+        }
+
+        /* Grid de Artículos de Confitería */
+        .grid-articulos-dulceria {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .tarjeta-articulo-box {
+            background: #ffffff;
+            border: 1px solid #e0e6ed;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tarjeta-articulo-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .tarjeta-articulo-box .preview-imagen-box {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tarjeta-articulo-box .preview-imagen-box img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .tarjeta-articulo-box h3 {
+            font-size: 15px;
+            color: #101828;
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tarjeta-articulo-box .descripcion-texto {
+            font-size: 13px;
+            color: #667085;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+            height: 54px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .tarjeta-articulo-box .seccion-precios {
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .tarjeta-articulo-box .seccion-precios .label-desde {
+            font-size: 12px;
+            color: #475467;
+            display: block;
+        }
+
+        .tarjeta-articulo-box .seccion-precios .monto-final {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ff0055;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .btn-comprar-agregar {
+            background-color: #ff0055;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-comprar-agregar:hover {
+            background-color: #cc0044;
+        }
+    </style>
+</head>
+<body>
+
+<div class="contenedor-general-dulceria">
+
+    <nav class="barra-navegacion-categorias">
+
+        <button class="tab-categoria-link active" data-target="promos">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/combo-kitkat.png}" src="/images/posters/combo-kitkat.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/612/612441.png'" alt="Promos Dulceras">
+            </div>
+            <span>Promos Dulceras</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="promos-pelicula">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/bebida-grande.png}" src="/images/posters/bebida-grande.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4221/4221419.png'" alt="Promos de Película">
+            </div>
+            <span>Promos De Película</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="combos-uno">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/combouno.png}" src="/images/posters/combouno.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2921/2921821.png'" alt="Combos para Uno">
+            </div>
+            <span>Combos Para Uno</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="combos-compartir">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/combofamiliar.png}" src="/images/posters/combofamiliar.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3050/3050181.png'" alt="Combos Para Compartir">
+            </div>
+            <span>Combos Para Compartir</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="canchitas">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/canchita-grande.png}" src="/images/posters/canchita-grande.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3418/3418858.png'" alt="Canchitas">
+            </div>
+            <span>Canchitas</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="complementos">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/kitkat.png}" src="/images/posters/kitkat.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3050/3050157.png'" alt="Complementos">
+            </div>
+            <span>Complementos</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="bebidas">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/agua.png}" src="/images/posters/agua.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3100/3100557.png'" alt="Bebidas">
+            </div>
+            <span>Bebidas</span>
+        </button>
+
+    </nav>
+
+    <div class="grid-articulos-dulceria">
+
+        <div class="tarjeta-articulo-box">
+            <div class="preview-imagen-box">
+                <img th:src="@{/images/posters/combo-kitkat.png}" src="/images/posters/combo-kitkat.png" onerror="this.onerror=null; this.src='https://placehold.co/150x150?text=Combo+Kitkat';" alt="Combo 2 + 2 Kitkat">
+            </div>
+            <h3>COMBO 2 + 2 KIT KAT</h3>
+            <p class="descripcion-texto">1 Canchita Gigante + 2 Bebidas (32oz) + 2 Kit Kat. *Sabor de bebida sujeto a stock / canchita sin refill.</p>
+            <div class="seccion-precios">
+                <span class="label-desde">Precio desde:</span>
+                <span class="monto-final">S/ 46.00</span>
+            </div>
+            <button class="btn-comprar-agregar">
+                <i class="fas fa-shopping-basket"></i> Agregar
+            </button>
+        </div>
+
+        <div class="tarjeta-articulo-box">
+            <div class="preview-imagen-box">
+                <img th:src="@{/images/posters/combo-kitkat.png}" src="/images/posters/combo-kitkat.png" onerror="this.onerror=null; this.src='https://placehold.co/150x150?text=Combo+1+Kitkat';" alt="Combo 1 Kitkat">
+            </div>
+            <h3>COMBO 1 + KIT KAT</h3>
+            <p class="descripcion-texto">1 Canchita Grande + 1 Bebida (32oz) + 1 Kit Kat. *Sabor de bebida y Kit Kat sujeto a stock / canchita sin refill.</p>
+            <div class="seccion-precios">
+                <span class="label-desde">Precio desde:</span>
+                <span class="monto-final">S/ 24.50</span>
+            </div>
+            <button class="btn-comprar-agregar">
+                <i class="fas fa-shopping-basket"></i> Agregar
+            </button>
+        </div>
+
+        <div class="tarjeta-articulo-box">
+            <div class="preview-imagen-box">
+                <img th:src="@{/images/posters/combofamiliar.png}" src="/images/posters/combofamiliar.png" onerror="this.onerror=null; this.src='https://placehold.co/150x150?text=Combo+Sublime';" alt="Combo Sublime">
+            </div>
+            <h3>COMBO 2 + 2 SUBLIME POPS</h3>
+            <p class="descripcion-texto">Canchita Gigante + 2 Bebidas (32oz) + 2 Sublime Pops 80gr. *Sabor de bebida sujeto a stock / canchita sin refill.</p>
+            <div class="seccion-precios">
+                <span class="label-desde">Precio desde:</span>
+                <span class="monto-final">S/ 47.00</span>
+            </div>
+            <button class="btn-comprar-agregar">
+                <i class="fas fa-shopping-basket"></i> Agregar
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.tab-categoria-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab-categoria-link').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine Scape - Dulcería Integrada</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ecf0f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .contenedor-general-dulceria {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 25px;
+            box-sizing: border-box;
+        }
+
+        /* Barra de Navegación de Categorías en Formato Horizontal Exacto */
+        .barra-navegacion-categorias {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #cfd8dc;
+            padding-bottom: 0px;
+            margin-bottom: 40px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .tab-categoria-link {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            min-width: 130px;
+            border-bottom: 4px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-categoria-link .icono-contenedor {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tab-categoria-link .icono-contenedor img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .tab-categoria-link span {
+            font-size: 13px;
+            font-weight: 700;
+            color: #546e7a;
+            text-align: center;
+        }
+
+        /* Marcador de Selección Activa color Corporativo Cine Scape */
+        .tab-categoria-link:hover, .tab-categoria-link.active {
+            border-bottom-color: #ff0055;
+        }
+
+        .tab-categoria-link.active span {
+            color: #ff0055;
+        }
+
+        /* Grid de Artículos de Confitería */
+        .grid-articulos-dulceria {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .tarjeta-articulo-box {
+            background: #ffffff;
+            border: 1px solid #e0e6ed;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tarjeta-articulo-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .tarjeta-articulo-box .preview-imagen-box {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tarjeta-articulo-box .preview-imagen-box img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .tarjeta-articulo-box h3 {
+            font-size: 15px;
+            color: #101828;
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tarjeta-articulo-box .descripcion-texto {
+            font-size: 13px;
+            color: #667085;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+            height: 54px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .tarjeta-articulo-box .seccion-precios {
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .tarjeta-articulo-box .seccion-precios .label-desde {
+            font-size: 12px;
+            color: #475467;
+            display: block;
+        }
+
+        .tarjeta-articulo-box .seccion-precios .monto-final {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ff0055;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .btn-comprar-agregar {
+            background-color: #ff0055;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-comprar-agregar:hover {
+            background-color: #cc0044;
+        }
+    </style>
+</head>
+<body>
+
+<div class="contenedor-general-dulceria">
+
+    <nav class="barra-navegacion-categorias">
+
+        <button class="tab-categoria-link active" data-target="promos">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/combo-kitkat.png}" src="/images/posters/combo-kitkat.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/612/612441.png'" alt="Promos Dulceras">
+            </div>
+            <span>Promos Dulceras</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="promos-pelicula">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/bebida-grande.png}" src="/images/posters/bebida-grande.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4221/4221419.png'" alt="Promos de Película">
+            </div>
+            <span>Promos De Película</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="combos-uno">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/combouno.png}" src="/images/posters/combouno.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2921/2921821.png'" alt="Combos para Uno">
+            </div>
+            <span>Combos Para Uno</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="combos-compartir">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/combofamiliar.png}" src="/images/posters/combofamiliar.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3050/3050181.png'" alt="Combos Para Compartir">
+            </div>
+            <span>Combos Para Compartir</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="canchitas">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/canchita-grande.png}" src="/images/posters/canchita-grande.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3418/3418858.png'" alt="Canchitas">
+            </div>
+            <span>Canchitas</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="complementos">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/kitkat.png}" src="/images/posters/kitkat.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3050/3050157.png'" alt="Complementos">
+            </div>
+            <span>Complementos</span>
+        </button>
+
+        <button class="tab-categoria-link" data-target="bebidas">
+            <div class="icono-contenedor">
+                <img th:src="@{/images/posters/agua.png}" src="/images/posters/agua.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3100/3100557.png'" alt="Bebidas">
+            </div>
+            <span>Bebidas</span>
+        </button>
+
+    </nav>
+
+    <div class="grid-articulos-dulceria">
+
+        <div class="tarjeta-articulo-box">
+            <div class="preview-imagen-box">
+                <img th:src="@{/images/posters/combo-kitkat.png}" src="/images/posters/combo-kitkat.png" onerror="this.onerror=null; this.src='https://placehold.co/150x150?text=Combo+Kitkat';" alt="Combo 2 + 2 Kitkat">
+            </div>
+            <h3>COMBO 2 + 2 KIT KAT</h3>
+            <p class="descripcion-texto">1 Canchita Gigante + 2 Bebidas (32oz) + 2 Kit Kat. *Sabor de bebida sujeto a stock / canchita sin refill.</p>
+            <div class="seccion-precios">
+                <span class="label-desde">Precio desde:</span>
+                <span class="monto-final">S/ 46.00</span>
+            </div>
+            <button class="btn-comprar-agregar">
+                <i class="fas fa-shopping-basket"></i> Agregar
+            </button>
+        </div>
+
+        <div class="tarjeta-articulo-box">
+            <div class="preview-imagen-box">
+                <img th:src="@{/images/posters/combo-kitkat.png}" src="/images/posters/combo-kitkat.png" onerror="this.onerror=null; this.src='https://placehold.co/150x150?text=Combo+1+Kitkat';" alt="Combo 1 Kitkat">
+            </div>
+            <h3>COMBO 1 + KIT KAT</h3>
+            <p class="descripcion-texto">1 Canchita Grande + 1 Bebida (32oz) + 1 Kit Kat. *Sabor de bebida y Kit Kat sujeto a stock / canchita sin refill.</p>
+            <div class="seccion-precios">
+                <span class="label-desde">Precio desde:</span>
+                <span class="monto-final">S/ 24.50</span>
+            </div>
+            <button class="btn-comprar-agregar">
+                <i class="fas fa-shopping-basket"></i> Agregar
+            </button>
+        </div>
+
+        <div class="tarjeta-articulo-box">
+            <div class="preview-imagen-box">
+                <img th:src="@{/images/posters/combofamiliar.png}" src="/images/posters/combofamiliar.png" onerror="this.onerror=null; this.src='https://placehold.co/150x150?text=Combo+Sublime';" alt="Combo Sublime">
+            </div>
+            <h3>COMBO 2 + 2 SUBLIME POPS</h3>
+            <p class="descripcion-texto">Canchita Gigante + 2 Bebidas (32oz) + 2 Sublime Pops 80gr. *Sabor de bebida sujeto a stock / canchita sin refill.</p>
+            <div class="seccion-precios">
+                <span class="label-desde">Precio desde:</span>
+                <span class="monto-final">S/ 47.00</span>
+            </div>
+            <button class="btn-comprar-agregar">
+                <i class="fas fa-shopping-basket"></i> Agregar
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.tab-categoria-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab-categoria-link').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
