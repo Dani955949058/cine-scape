@@ -1,13 +1,11 @@
 # Paso 1: Usar una imagen oficial de Maven con Java 17
 FROM maven:3.8.5-openjdk-17 AS build
-
-# Creamos un directorio de trabajo neutro en el servidor Linux
 WORKDIR /app
 
-# Copiamos solo el contenido de la carpeta interna 'demo' a la raíz del contenedor
-COPY demo/ .
+# Como tus archivos ya están sueltos en la raíz de GitHub, copiamos todo directo
+COPY . .
 
-# Ejecutamos la compilación limpia sin problemas de rutas
+# Compilamos limpiamente
 RUN mvn clean package -DskipTests
 
 # Paso 2: Ejecutar la aplicación
