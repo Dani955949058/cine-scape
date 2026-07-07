@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine-Scape | Proceso de Compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0b122c; color: white; font-family: 'Arial', sans-serif; }
+        .card-custom { background: #111a36; border: 1px solid #22315e; border-radius: 12px; }
+
+        /* Barra de Progreso */
+        .progress-container { display: flex; justify-content: space-between; position: relative; margin-bottom: 30px; }
+        .progress-line { position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: #22315e; z-index: 1; transform: translateY(-50%); }
+        .progress-line-fill { position: absolute; top: 50%; left: 0; width: 50%; height: 4px; background: #ff0055; z-index: 2; transform: translateY(-50%); transition: width 0.3s; }
+        .step { width: 40px; height: 40px; border-radius: 50%; background: #111a36; border: 3px solid #22315e; display: flex; align-items: center; justify-content: center; z-index: 3; font-weight: bold; transition: 0.3s; }
+        .step.active { border-color: #ff0055; background: #ff0055; color: white; }
+        .step.complete { border-color: #ff0055; background: #111a36; color: #ff0055; }
+
+        /* Botones de Horarios */
+        .time-badge { cursor: pointer; border: 2px solid #22315e; background: transparent; color: white; padding: 10px 15px; border-radius: 8px; transition: 0.2s; font-weight: bold; }
+        .time-badge:hover { border-color: #ff0055; }
+        .time-badge.selected { background: #ff0055; border-color: #ff0055; }
+
+        /* Sala de Cine y Asientos */
+        .screen { background: #e2e8f0; height: 10px; width: 70%; margin: 0 auto 25px auto; border-radius: 50% 50% 0 0; box-shadow: 0 4px 12px rgba(255, 255, 255, 0.5); }
+        .seat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; }
+        .seat { background: #22315e; height: 35px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; transition: 0.2s; user-select: none; }
+        .seat:hover:not(.occupied) { background: #3b4f8c; }
+        .seat.selected { background: #ff0055; color: white; }
+        .seat.occupied { background: #1a233d; color: #475569; cursor: not-allowed; opacity: 0.4; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <div class="progress-container">
+                <div class="progress-line"></div>
+                <div class="progress-line-fill" id="progress-fill"></div>
+                <div class="step complete"><i class="fa fa-film"></i></div>
+                <div class="step active" id="step-config">2</div>
+                <div class="step" id="step-pay">3</div>
+            </div>
+            <p class="text-center text-muted small">Paso 2 de 3: Configura tus entradas, horarios y asientos</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <form th:action="@{/finalizar}" method="POST" id="form-compra" class="row w-100">
+            <input type="hidden" name="peli" th:value="${peli}">
+            <input type="hidden" name="cine" th:value="${cine}">
+            <input type="hidden" name="tipo" id="input-tipo-final" value="Entrada Regular">
+
+            <div class="col-md-7 mb-4">
+                <div class="card card-custom p-4 mb-4 shadow">
+                    <h4 class="text-danger fw-bold mb-3"><i class="fa fa-ticket-alt me-2"></i>1. Selecciona tus Entradas</h4>
+                    <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded">
+                        <div>
+                            <h6 class="m-0 fw-bold">Entrada General</h6>
+                            <small class="text-muted">Precio unitario: S/ 15.00</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button" class="btn btn-sm btn-outline-light rounded-circle" onclick="cambiarEntradas(-1)"><i class="fa fa-minus"></i></button>
+                            <span class="fs-4 fw-bold" id="cantidad-entradas">1</span>
+                            <button type="button" class="btn btn-sm btn-outline-light rounded-circle" onclick="cambiarEntradas(1)"><i class="fa fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-custom p-4 mb-4 shadow">
+                    <h4 class="text-danger fw-bold mb-3"><i class="fa fa-clock me-2"></i>2. Elige el Horario</h4>
+                    <input type="hidden" id="horario-seleccionado" name="horario" value="" required>
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <button type="button" class="time-badge" onclick="seleccionarHorario('3:30 PM', this)">3:30 PM</button>
+                        <button type="button" class="time-badge" onclick="seleccionarHorario('6:15 PM', this)">6:15 PM</button>
+                        <button type="button" class="time-badge" onclick="seleccionarHorario('9:00 PM', this)">9:00 PM</button>
+                        <button type="button" class="time-badge" onclick="seleccionarHorario('11:30 PM', this)">11:30 PM</button>
+                    </div>
+                </div>
+
+                <div class="card card-custom p-4 shadow text-center">
+                    <h4 class="text-danger fw-bold mb-1 text-start"><i class="fa fa-chair me-2"></i>3. Distribución de Asientos</h4>
+                    <p class="text-muted small text-start mb-4">Debes elegir exactamente la misma cantidad que tus entradas.</p>
+
+                    <div class="screen mb-4"></div>
+                    <p class="text-muted small mb-2">PANTALLA</p>
+
+                    <div class="seat-grid mb-4">
+                        <div class="seat" onclick="gestionarAsiento(this, 'A1')">A1</div>
+                        <div class="seat occupied">A2</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'A3')">A3</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'A4')">A4</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'A5')">A5</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'A6')">A6</div>
+
+                        <div class="seat" onclick="gestionarAsiento(this, 'B1')">B1</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'B2')">B2</div>
+                        <div class="seat occupied">B3</div>
+                        <div class="seat occupied">B4</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'B5')">B5</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'B6')">B6</div>
+
+                        <div class="seat" onclick="gestionarAsiento(this, 'C1')">C1</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'C2')">C2</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'C3')">C3</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'C4')">C4</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'C5')">C5</div>
+                        <div class="seat" onclick="gestionarAsiento(this, 'C6')">C6</div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-warning w-50 mx-auto" onclick="limpiarAsientos()">
+                        <i class="fa fa-undo me-1"></i> Elegir otros asientos / Deseleccionar
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card card-custom p-4 shadow sticky-top" style="top: 90px;">
+                    <h4 class="text-warning fw-bold mb-4 border-bottom border-secondary pb-2">Resumen del Pedido</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fa fa-film text-danger me-2"></i> <strong>Película:</strong> <span th:text="${peli}" class="text-white-50">Película</span></li>
+                        <li class="mb-2"><i class="fa fa-map-marker-alt text-danger me-2"></i> <strong>Cine:</strong> <span th:text="${cine}" class="text-white-50">Cine</span></li>
+                        <li class="mb-2"><i class="fa fa-clock text-danger me-2"></i> <strong>Horario:</strong> <span id="resumen-horario" class="text-warning fw-bold">No seleccionado</span></li>
+                        <li class="mb-2"><i class="fa fa-users text-danger me-2"></i> <strong>Entradas:</strong> <span id="resumen-tickets" class="fw-bold">1</span></li>
+                        <li class="mb-3"><i class="fa fa-th text-danger me-2"></i> <strong>Tus Asientos:</strong> <span id="resumen-asientos" class="badge bg-danger fs-6">Ninguno</span></li>
+                        <hr class="border-secondary">
+                        <li class="d-flex justify-content-between align-items-center fs-4 mt-3">
+                            <span>Total a Pagar:</span>
+                            <span class="text-success fw-bold" id="total-precio">S/ 15.00</span>
+                        </li>
+                    </ul>
+
+                    <button type="submit" class="btn btn-danger w-100 btn-lg fw-bold mt-4 py-3 shadow" id="btn-finalizar" disabled>
+                        Proceder al Pago <i class="fa fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let maxEntradas = 1;
+    let asientosSeleccionados = [];
+    const precioUnitario = 15.0;
+
+    function cambiarEntradas(valor) {
+        let nuevaCantidad = maxEntradas + valor;
+        if (nuevaCantidad >= 1 && nuevaCantidad <= 10) {
+            maxEntradas = nuevaCantidad;
+            document.getElementById('cantidad-entradas').innerText = maxEntradas;
+            document.getElementById('resumen-tickets').innerText = maxEntradas;
+            document.getElementById('total-precio').innerText = `S/ ${(maxEntradas * precioUnitario).toFixed(2)}`;
+            limpiarAsientos();
+        }
+    }
+
+    function seleccionarHorario(hora, boton) {
+        document.querySelectorAll('.time-badge').forEach(b => b.classList.remove('selected'));
+        boton.classList.add('selected');
+        document.getElementById('horario-seleccionado').value = hora;
+        document.getElementById('resumen-horario').innerText = hora;
+        validarFormularioCompleto();
+    }
+
+    function gestionarAsiento(elementoAsiento, codigoAsiento) {
+        if (elementoAsiento.classList.contains('selected')) {
+            elementoAsiento.classList.remove('selected');
+            asientosSeleccionados = asientosSeleccionados.filter(a => a !== codigoAsiento);
+        } else {
+            if (asientosSeleccionados.length >= maxEntradas) {
+                alert(`¡Atención! Solo seleccionaste ${maxEntradas} entrada(s). Si deseas cambiar, haz clic en el asiento elegido para deseleccionarlo o pulsa el botón de abajo.`);
+                return;
+            }
+            elementoAsiento.classList.add('selected');
+            asientosSeleccionados.push(codigoAsiento);
+        }
+        actualizarVistaAsientos();
+    }
+
+    function limpiarAsientos() {
+        document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
+        asientosSeleccionados = [];
+        actualizarVistaAsientos();
+    }
+
+    function actualizarVistaAsientos() {
+        const txtAsientos = document.getElementById('resumen-asientos');
+        if (asientosSeleccionados.length > 0) {
+            txtAsientos.innerText = asientosSeleccionados.join(', ');
+            txtAsientos.className = "badge bg-success fs-6";
+        } else {
+            txtAsientos.innerText = "Ninguno";
+            txtAsientos.className = "badge bg-danger fs-6";
+        }
+        validarFormularioCompleto();
+    }
+
+    function validarFormularioCompleto() {
+        const horarioListo = document.getElementById('horario-seleccionado').value !== "";
+        const asientosListos = asientosSeleccionados.length === maxEntradas;
+        const btn = document.getElementById('btn-finalizar');
+        const fill = document.getElementById('progress-fill');
+        const stepPay = document.getElementById('step-pay');
+
+        if (horarioListo && asientosListos) {
+            btn.removeAttribute('disabled');
+            fill.style.width = "100%";
+            stepPay.classList.add('active');
+        } else {
+            btn.setAttribute('disabled', 'true');
+            fill.style.width = "50%";
+            stepPay.classList.remove('active');
+        }
+    }
+</script>
+</body>
+</html>

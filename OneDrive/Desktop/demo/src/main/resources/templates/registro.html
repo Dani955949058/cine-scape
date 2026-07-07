@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cineplanet - Inicia Sesión</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-box { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+        .back-link { text-align: left; margin-bottom: 40px; }
+        .back-link a { color: #64748b; text-decoration: none; font-size: 14px; }
+        h2 { font-size: 24px; color: #0f172a; margin-bottom: 30px; font-weight: 700; }
+        label { display: block; text-align: left; font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: 600; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 20px; font-size: 15px; outline: none; }
+
+        /* Contenedor Captcha Falso */
+        .captcha-mock { display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 4px; margin-bottom: 25px; justify-content: space-between; }
+        .captcha-left { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #334155; }
+        .captcha-checkbox { width: 24px; height: 24px; cursor: pointer; }
+
+        .btn-submit { background: #004fb0; color: white; width: 100%; padding: 14px; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .separator { border-top: 1px solid #e2e8f0; margin: 25px 0; position: relative; }
+        .separator span { background: white; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 0 10px; font-size: 13px; color: #94a3b8; }
+        .btn-join { background: none; border: 2px solid #004fb0; color: #004fb0; width: 100%; padding: 12px; border-radius: 25px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="login-box">
+    <div class="back-link"><a href="/"><i class="fa-solid fa-arrow-left"></i> &larr; Regresar</a></div>
+    <h2>Inicia Sesión</h2>
+
+    <form action="/registrar" method="post">
+        <input type="hidden" name="peli" th:value="${peli}">
+        <input type="hidden" name="cine" th:value="${cine}">
+
+        <label>N° de Socio Cineplanet o Nombre</label>
+        <input type="text" name="nombre" placeholder="DNI, CE o Nombre Completo" required>
+
+        <label>Contraseña</label>
+        <input type="password" placeholder="••••••••" required>
+
+        <div class="captcha-mock">
+            <div class="captcha-left">
+                <input type="checkbox" class="captcha-checkbox" required>
+                <span>No soy un robot</span>
+            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/RecaptchaLogo.svg" width="30" alt="recaptcha">
+        </div>
+
+        <button type="submit" class="btn-submit">Ingresar</button>
+    </form>
+
+    <div class="separator"><span>¿Todavía no eres Socio?</span></div>
+    <a href="/unete" class="btn-join" style="text-decoration: none; display: block; text-align: center;">Únete</a>
+</div>
+</body>
+</html>

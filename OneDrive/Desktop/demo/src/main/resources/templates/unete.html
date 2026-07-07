@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cineplanet - Únete</title>
+    <style>
+        /* Estilos idénticos a la pantalla de Inicio de Sesión para mantener uniformidad */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-box { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+        .back-link { text-align: left; margin-bottom: 40px; }
+        .back-link a { color: #64748b; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        h2 { font-size: 24px; color: #0f172a; margin-bottom: 30px; font-weight: 700; }
+        label { display: block; text-align: left; font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: 600; }
+        input[type="text"], input[type="password"], input[type="email"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 20px; font-size: 15px; outline: none; }
+
+        /* Botón de acción principal en Azul Cineplanet */
+        .btn-submit { background: #004fb0; color: white; width: 100%; padding: 14px; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; margin-bottom: 20px; }
+        .btn-submit:hover { background: #003a82; }
+
+        .separator { border-top: 1px solid #e2e8f0; margin: 25px 0; position: relative; }
+        .separator span { background: white; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 0 10px; font-size: 13px; color: #94a3b8; }
+
+        /* Botón secundario con borde azul */
+        .btn-login { background: none; border: 2px solid #004fb0; color: #004fb0; width: 100%; padding: 12px; border-radius: 25px; font-size: 15px; font-weight: bold; cursor: pointer; text-decoration: none; display: block; }
+        .btn-login:hover { background: #f0f7ff; }
+    </style>
+</head>
+<body>
+<div class="login-box">
+    <div class="back-link"><a href="/">&larr; Regresar</a></div>
+
+    <h2>Regístrate</h2>
+
+    <form action="/procesar-registro" method="post">
+        <label>Nombres Completos</label>
+        <input type="text" name="nombre" placeholder="Ingresa tu nombre y apellido" required>
+
+        <label>Número de DNI</label>
+        <input type="text" name="dni" placeholder="Ingresa tu DNI de 8 dígitos" required>
+
+        <label>Correo Electrónico</label>
+        <input type="email" name="correo" placeholder="ejemplo@correo.com" required>
+
+        <label>Contraseña</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+
+        <button type="submit" class="btn-submit">Registrarse</button>
+    </form>
+
+    <div class="separator"><span>¿Ya tienes una cuenta de Socio?</span></div>
+    <a href="/comprar?pelicula=Toy+Story+5&cine=Sede+Principal" class="btn-login">Inicia Sesión</a>
+</div>
+</body>
+</html>

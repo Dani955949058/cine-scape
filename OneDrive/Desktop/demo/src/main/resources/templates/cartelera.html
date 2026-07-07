@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cineplanet & Cinescape - Sistema Integrado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+        body { background: #ffffff; color: #333; padding-bottom: 80px; }
+
+        /* Navbar Superior */
+        .navbar { background: #0b122c; color: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .menu-toggle { font-size: 24px; cursor: pointer; color: white; background: none; border: none; }
+        .logo { font-size: 22px; font-weight: bold; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .logo span { color: #ff0055; }
+        .nav-right { display: flex; align-items: center; gap: 25px; font-size: 18px; }
+
+        /* Menú Lateral */
+        .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: white; box-shadow: 4px 0 15px rgba(0,0,0,0.2); transition: 0.3s; z-index: 200; padding: 30px 20px; display: flex; flex-direction: column; gap: 20px; }
+        .sidebar.active { left: 0; }
+        .sidebar-close { align-self: flex-end; font-size: 24px; cursor: pointer; background:none; border:none; }
+        .sidebar a { text-decoration: none; color: #1e293b; font-size: 18px; font-weight: 500; padding: 10px; border-radius: 5px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .sidebar a:hover { background: #f1f5f9; color: #ff0055; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; }
+        .overlay.active { display: block; }
+
+        /* Hero / Tráiler */
+        .hero-container { background: #000; position: relative; width: 100%; padding-top: 40%; }
+        .hero-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        /* Detalles de Película Principal */
+        .movie-details { text-align: center; padding: 40px 20px; background: #f8fafc; }
+        .movie-title { font-size: 36px; font-weight: 800; color: #0b122c; }
+        .btn-comprar { background: #ff0055; color: white; font-size: 18px; font-weight: bold; border: none; padding: 15px 40px; border-radius: 30px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; box-shadow: 0 4px 10px rgba(255,0,85,0.3); }
+
+        /* Sala Privada Card */
+        .sala-privada-card { margin: 20px auto; padding: 20px; background: #fff; border: 2px dashed #ff0055; border-radius: 12px; max-width: 500px; }
+        .btn-sala-privada { background: #3b82f6; color: white; padding: 12px 25px; border-radius: 30px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
+        .btn-sala-privada:disabled { background: #e2e8f0; color: #94a3b8; border: none; cursor: not-allowed; }
+
+        /* Grid de Películas */
+        .catalog-container { max-width: 1200px; margin: 50px auto; padding: 0 20px; display: flex; gap: 30px; }
+        .filters-aside { width: 200px; flex-shrink: 0; }
+        .provincia-btn { padding: 10px; color: #64748b; cursor: pointer; border-radius: 5px; margin-bottom: 5px; transition: 0.2s; }
+        .provincia-btn.active { background: #ff0055; color: white; font-weight: bold; }
+
+        .movies-grid { flex-grow: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
+        .movie-card { background: white; border-radius: 8px; overflow: hidden; position: relative; transition: 0.3s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .movie-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+
+        /* Estado No Disponible */
+        .movie-card.not-available { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        .movie-card.not-available::after { content: "NO DISPONIBLE EN ESTA SEDE"; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); color: white; display: flex; justify-content: center; align-items: center; text-align: center; font-weight: bold; font-size: 14px; padding: 10px; box-sizing: border-box; z-index: 20; }
+
+        .poster-wrapper { position: relative; width: 100%; padding-top: 145%; background: #e2e8f0; }
+        .poster-wrapper img { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; }
+        .badge-estreno { position: absolute; top: 15px; left: -25px; background: #ff0055; color: white; font-size: 10px; padding: 4px 30px; transform: rotate(-45deg); z-index: 10; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+        .card-info { padding: 12px; }
+        .card-info h4 { font-size: 16px; margin-bottom: 5px; color: #0b122c; }
+        .card-info p { font-size: 13px; color: #64748b; }
+
+        /* Vistas de Dulcería Integrada */
+        .dulceria-section { display: none; max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .category-title { font-size: 24px; font-weight: bold; color: #0b122c; margin: 35px 0 15px 0; border-left: 5px solid #ff0055; padding-left: 12px; }
+        .dulceria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
+        .item-dulce { background: #ffffff; color: #333; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; }
+        .item-dulce:hover { transform: translateY(-3px); box-shadow: 0 8px 12px rgba(0,0,0,0.08); }
+        .dulce-img-wrapper { position: relative; width: 100%; padding-top: 90%; margin-bottom: 15px; background: #f8fafc; border-radius: 8px; overflow: hidden; }
+        .dulce-img-wrapper img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+        .item-dulce h4 { font-size: 16px; color: #0b122c; margin: 10px 0 5px 0; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+        .item-dulce p { color: #ff0055; font-weight: bold; font-size: 18px; margin-bottom: 15px; }
+
+        /* Modales Globales */
+        .modal-box { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #0b122c; color: white; width: 100%; max-width: 480px; border-radius: 15px; padding: 30px; border: 1px solid #1e293b; max-height: 85vh; overflow-y: auto; }
+
+        /* Estructura Tipo Entrada o Fila del Carrito */
+        .ticket-row { display: flex; justify-content: space-between; align-items: center; background: #161d33; padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #1e293b; }
+        .ticket-info h5 { font-size: 16px; color: white; font-weight: bold; }
+        .ticket-info p { font-size: 13px; color: #ff0055; font-weight: 600; margin-top: 2px; }
+
+        .selector-box { display: flex; align-items: center; gap: 15px; }
+        .btn-step { background: #ff0055; color: white; border: none; width: 32px; height: 32px; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .qty-num { font-size: 18px; font-weight: bold; width: 25px; text-align: center; }
+
+        .total-pay { font-size: 24px; font-weight: bold; color: #ff0055; margin: 15px 0; text-align: center; }
+
+        /* Casillero de Cupones Integrados en checkout */
+        .coupon-checkout-box { background: #050a1d; border: 1px dashed #3b82f6; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none; text-align: center; }
+        .checkbox-coupon { transform: scale(1.3); margin-right: 8px; cursor: pointer; vertical-align: middle; }
+
+        .pay-methods { display: flex; gap: 10px; margin-bottom: 15px; }
+        .pay-btn { flex: 1; padding: 12px; border-radius: 5px; border: 1px solid #1e293b; background: #161d33; color: white; cursor: pointer; font-size: 14px; }
+        .pay-btn.active { border-color: #ff0055; color: #ff0055; }
+
+        .input-pay { width: 100%; padding: 12px; background: #050a1d; border: 1px solid #1e293b; border-radius: 5px; color: white; margin-bottom: 10px; }
+        .btn-confirm { width: 100%; padding: 15px; background: #ff0055; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        /* Secciones del Modal Historial / Cupones */
+        .tabs-historial { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 10px; background: #161d33; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .tab-btn.active { background: #ff0055; }
+
+        .purchase-card { background: #161d33; border-left: 4px solid #ff0055; padding: 12px; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 14px; }
+        .purchase-card span { color: #94a3b8; font-size: 12px; }
+
+        /* Vistas de Autenticación */
+        .auth-view { text-align: center; }
+        .login-icon-circle { width: 80px; height: 80px; background: #161d33; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; color: #ff0055; font-size: 35px; border: 1px solid #1e293b; }
+        .login-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: white; }
+        .login-subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 25px; }
+        .link-toggle-auth { color: #ff0055; text-decoration: none; font-size: 14px; display: inline-block; margin-top: 15px; font-weight: bold; cursor: pointer; }
+
+        /* Barra Inferior */
+        .footer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #ff0055; color: white; text-align: center; padding: 15px; font-weight: bold; z-index: 99; cursor: pointer; letter-spacing: 1px; }
+
+        /* Admin Panel */
+        .admin-view { display: none; background: #f0fdf4; border: 2px solid #16a34a; padding: 20px; margin: 20px auto; max-width: 1200px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-left">
+        <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+        <a href="#" onclick="mostrarSeccion('cartelera')" class="logo">cine<span>planet</span></a>
+    </div>
+    <div class="nav-right">
+        <i class="fa-solid fa-circle-user" style="color: #ff0055;"></i>
+        <span>Hola, <b id="user-display">Socio Cineplanet</b></span>
+    </div>
+</nav>
+
+<div id="admin-panel" class="admin-view">
+    <h2 style="color: #166534;"><i class="fa-solid fa-shield-halved"></i> Dashboard Administrador</h2>
+    <p>Visualización de ingresos y gestión de salas activada.</p>
+</div>
+
+<div id="sec-cartelera">
+    <div class="hero-container">
+        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&loop=1&playlist=dQw4w9WgXcQ" allow="autoplay; encrypted-media"></iframe>
+    </div>
+
+    <div class="movie-details">
+        <h1 class="movie-title">Toy Story 5 <span style="color:#ff0055;">(R)</span></h1>
+        <button class="btn-comprar" onclick="abrirCompra('Toy Story 5', 30.00)">
+            <i class="fa-solid fa-ticket"></i> COMPRAR ENTRADA
+        </button>
+
+        <div class="sala-privada-card">
+            <p style="font-weight: bold;">⭐ Reserva Sala Privada (S/ 450.00)</p>
+            <p style="font-size: 12px; color: #64748b;">Disponible 9:00 AM - 12:00 PM</p>
+            <button id="btn-privada" class="btn-sala-privada" onclick="abrirCompra('Sala Privada', 450.00, true)">
+                RESERVAR SALA
+            </button>
+        </div>
+    </div>
+
+    <div class="catalog-container">
+        <aside class="filters-aside">
+            <h3 style="margin-bottom: 15px; border-bottom: 2px solid #f1f5f9;">Filtrar Por:</h3>
+            <div class="provincia-btn active" onclick="cambiarProvincia('Lima', this)">Lima</div>
+            <div class="provincia-btn" onclick="cambiarProvincia('Arequipa', this)">Arequipa</div>
+            <div class="provincia-btn" onclick="cambiarProvincia('Chiclayo', this)">Chiclayo</div>
+            <div class="provincia-btn" onclick="cambiarProvincia('Trujillo', this)">Trujillo</div>
+        </aside>
+
+        <main class="movies-grid">
+            <div class="movie-card" id="movie-ts5" onclick="abrirCompra('Toy Story 5', 30.00)">
+                <div class="poster-wrapper">
+                    <span class="badge-estreno">Estreno</span>
+                    <img src="/images/posters/ts5_scared.jpg" th:src="@{/images/posters/ts5_scared.jpg}" alt="Toy Story 5">
+                </div>
+                <div class="card-info"><h4>Toy Story 5</h4><p>Animación | 1h 42m</p></div>
+            </div>
+
+            <div class="movie-card" id="movie-insideout" onclick="abrirCompra('IntensaMente 2', 30.00)">
+                <div class="poster-wrapper">
+                    <img src="/images/posters/intensamente2.jpg" th:src="@{/images/posters/intensamente2.jpg}" alt="IntensaMente 2">
+                </div>
+                <div class="card-info"><h4>IntensaMente 2</h4><p>Animación | 1h 40m</p></div>
+            </div>
+
+            <div class="movie-card" id="movie-badboys" onclick="abrirCompra('Bad Boys 4', 35.00)">
+                <div class="poster-wrapper">
+                    <img src="/images/posters/badboys4.jpg" th:src="@{/images/posters/badboys4.jpg}" alt="Bad Boys 4">
+                </div>
+                <div class="card-info"><h4>Bad Boys 4</h4><p>Acción | 1h 55m</p></div>
+            </div>
+
+            <div class="movie-card" id="movie-minions" onclick="abrirCompra('Mi Villano Favorito 4', 30.00)">
+                <div class="poster-wrapper">
+                    <span class="badge-estreno">Estreno</span>
+                    <img src="/images/posters/minions4.jpg" th:src="@{/images/posters/minions4.jpg}" alt="Mi Villano Favorito 4">
+                </div>
+                <div class="card-info"><h4>Mi Villano Favorito 4</h4><p>Animación | 1h 35m</p></div>
+            </div>
+
+            <div class="movie-card" id="movie-quietplace" onclick="abrirCompra('Un Lugar en Silencio: Día 1', 35.00)">
+                <div class="poster-wrapper">
+                    <img src="/images/posters/unlugarensilencio.jpg" th:src="@{/images/posters/unlugarensilencio.jpg}" alt="Un Lugar en Silencio">
+                </div>
+                <div class="card-info"><h4>Un Lugar en Silencio</h4><p>Terror | 1h 40m</p></div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="sec-dulceria" class="dulceria-section">
+    <h2 style="text-align: center; font-size: 28px; margin-bottom: 5px;">Productos Disponibles - Dulcería</h2>
+    <p style="text-align: center; color: #64748b; margin-bottom: 10px;"><i class="fa-solid fa-location-dot"></i> Retiro en Sede Seleccionada</p>
+
+    <div class="category-title"><i class="fa-solid fa-boxes-packing"></i> Combos</div>
+    <div class="dulceria-grid">
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/combos.jpg" th:src="@{/images/combos/combos.jpg}" alt="Combos">
+            </div>
+            <h4>Combo 1: Popcorn Gigante + 2 Bebidas</h4>
+            <p>S/ 45.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Combo 1: Popcorn Gigante + 2 Bebidas', 45.00)">ELEGIR COMBO</button>
+        </div>
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/combos.jpg" th:src="@{/images/combos/combos.jpg}" alt="Combos">
+            </div>
+            <h4>Combo 2: Popcorn Mediano + 1 Bebida + Hotdog</h4>
+            <p>S/ 35.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Combo 2: Popcorn Mediano + 1 Bebida + Hotdog', 35.00)">ELEGIR COMBO</button>
+        </div>
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/combos.jpg" th:src="@{/images/combos/combos.jpg}" alt="Combos">
+            </div>
+            <h4>Combo 3: Popcorn Familiar + 3 Bebidas + Dulces</h4>
+            <p>S/ 60.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Combo 3: Popcorn Familiar + 3 Bebidas + Dulces', 60.00)">ELEGIR COMBO</button>
+        </div>
+    </div>
+
+    <div class="category-title"><i class="fa-solid fa-bowl-food"></i> Canchita</div>
+    <div class="dulceria-grid">
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/canchita.jpg" th:src="@{/images/combos/canchita.jpg}" alt="Canchita Gigante">
+            </div>
+            <h4>Canchita Gigante</h4>
+            <p>S/ 25.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Canchita Gigante', 25.00)">AÑADIR</button>
+        </div>
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/canchita.jpg" th:src="@{/images/combos/canchita.jpg}" alt="Canchita Grande">
+            </div>
+            <h4>Canchita Grande</h4>
+            <p>S/ 20.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Canchita Grande', 20.00)">AÑADIR</button>
+        </div>
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/canchita.jpg" th:src="@{/images/combos/canchita.jpg}" alt="Canchita Mediana">
+            </div>
+            <h4>Canchita Mediana</h4>
+            <p>S/ 15.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Canchita Mediana', 15.00)">AÑADIR</button>
+        </div>
+    </div>
+
+    <div class="category-title"><i class="fa-solid fa-glass-water"></i> Bebidas</div>
+    <div class="dulceria-grid">
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/bebida.jpg" th:src="@{/images/combos/bebida.jpg}" alt="Bebida Grande">
+            </div>
+            <h4>Bebida Grande</h4>
+            <p>S/ 12.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Bebida Grande', 12.00)">AÑADIR</button>
+        </div>
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/bebida.jpg" th:src="@{/images/combos/bebida.jpg}" alt="Bebida Mediana">
+            </div>
+            <h4>Bebida Mediana</h4>
+            <p>S/ 10.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Bebida Mediana', 10.00)">AÑADIR</button>
+        </div>
+    </div>
+
+    <div class="category-title"><i class="fa-solid fa-bottle-water"></i> Agua</div>
+    <div class="dulceria-grid">
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/agua.jpg" th:src="@{/images/combos/agua.jpg}" alt="Agua Mineral">
+            </div>
+            <h4>Agua San Luis 625ml</h4>
+            <p>S/ 7.50</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('Agua San Luis 625ml', 7.50)">AÑADIR</button>
+        </div>
+    </div>
+
+    <div class="category-title"><i class="fa-solid fa-candy-cane"></i> Chocolates</div>
+    <div class="dulceria-grid">
+        <div class="item-dulce">
+            <div class="dulce-img-wrapper">
+                <img src="/images/combos/kitkat.jpg" th:src="@{/images/combos/kitkat.jpg}" alt="KitKat White">
+            </div>
+            <h4>KitKat White</h4>
+            <p>S/ 7.00</p>
+            <button class="btn-confirm" onclick="abrirCompraDulceria('KitKat White', 7.00)">AÑADIR</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-login" class="modal-box">
+    <div class="modal-content">
+        <div id="view-login" class="auth-view">
+            <div class="login-icon-circle"><i class="fa-solid fa-user"></i></div>
+            <h2 class="login-title">¡Hola Socio!</h2>
+            <p class="login-subtitle">Ingresa tus datos para continuar con tu experiencia Cineplanet</p>
+            <input type="text" id="login-documento" class="input-pay" placeholder="Número de Documento (DNI)">
+            <input type="password" id="login-contrasena" class="input-pay" placeholder="Contraseña">
+            <button class="btn-confirm" onclick="procesarLoginGlobal()">INGRESAR</button>
+            <div class="link-toggle-auth" onclick="mostrarVista('register')">¿No eres socio? Regístrate aquí</div>
+            <button onclick="cerrarLogin()" style="width: 100%; background: none; border: none; color: #94a3b8; margin-top: 15px; cursor: pointer; text-decoration: underline;">Volver</button>
+        </div>
+
+        <div id="view-register" class="auth-view" style="display: none;">
+            <div class="login-icon-circle" style="color: #3b82f6;"><i class="fa-solid fa-user-plus"></i></div>
+            <h2 class="login-title">Únete a nosotros</h2>
+            <p class="login-subtitle">Sé un Socio Cineplanet y obtén múltiples beneficios exclusivos</p>
+            <input type="text" id="reg-nombres" class="input-pay" placeholder="Nombres y Apellidos">
+            <input type="text" id="reg-dni" class="input-pay" placeholder="Número de DNI">
+            <input type="email" id="reg-correo" class="input-pay" placeholder="Correo Electrónico">
+            <input type="password" id="reg-contrasena" class="input-pay" placeholder="Crea tu Contraseña">
+            <button class="btn-confirm" style="background: #3b82f6;" onclick="procesarRegistroGlobal()">REGISTRARSE</button>
+            <div class="link-toggle-auth" style="color: #3b82f6;" onclick="mostrarVista('login')">¿Ya eres socio? Inicia Sesión aquí</div>
+            <button onclick="cerrarLogin()" style="width: 100%; background: none; border: none; color: #94a3b8; margin-top: 15px; cursor: pointer; text-decoration: underline;">Volver</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-compra" class="modal-box">
+    <div class="modal-content">
+        <h2 style="text-align: center; margin-bottom: 20px;">Resumen de Pedido</h2>
+        <p id="compra-titulo" style="font-weight: bold; font-size: 18px; text-align: center; margin-bottom: 15px; color:#ff0055;"></p>
+
+        <div id="contenedor-tipo-entradas">
+            <div class="ticket-row">
+                <div class="ticket-info"><h5>Adulto</h5><p id="precio-adulto">S/ 30.00</p></div>
+                <div class="selector-box">
+                    <button class="btn-step" onclick="cambiarMultiQty('adulto', -1)">-</button>
+                    <span id="qty-adulto" class="qty-num">1</span>
+                    <button class="btn-step" onclick="cambiarMultiQty('adulto', 1)">+</button>
+                </div>
+            </div>
+            <div class="ticket-row">
+                <div class="ticket-info"><h5>Niños</h5><p>S/ 20.00</p></div>
+                <div class="selector-box">
+                    <button class="btn-step" onclick="cambiarMultiQty('nino', -1)">-</button>
+                    <span id="qty-nino" class="qty-num">0</span>
+                    <button class="btn-step" onclick="cambiarMultiQty('nino', 1)">+</button>
+                </div>
+            </div>
+            <div class="ticket-row">
+                <div class="ticket-info"><h5>Adulto Mayor</h5><p>S/ 25.00</p></div>
+                <div class="selector-box">
+                    <button class="btn-step" onclick="cambiarMultiQty('mayor', -1)">-</button>
+                    <span id="qty-mayor" class="qty-num">0</span>
+                    <button class="btn-step" onclick="cambiarMultiQty('mayor', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="contenedor-cantidad-dulceria" style="display: none;">
+            <div class="ticket-row">
+                <div class="ticket-info"><h5>Cantidad a Llevar</h5><p id="precio-unitario-dulce">S/ 0.00</p></div>
+                <div class="selector-box">
+                    <button class="btn-step" onclick="cambiarQtyDulceria(-1)">-</button>
+                    <span id="qty-dulceria-val" class="qty-num">1</span>
+                    <button class="btn-step" onclick="cambiarQtyDulceria(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="box-cupon-aplicar" class="coupon-checkout-box">
+            <label style="color: #3b82f6; font-weight: bold; cursor: pointer;">
+                <input type="checkbox" id="chk-usar-cupon" class="checkbox-coupon" onchange="actualizarTotal()">
+                ¡Utilizar mi Cupón de 30% Dscto!
+            </label>
+        </div>
+
+        <div class="total-pay">Total a Pagar: <span id="monto-total">S/ 30.00</span></div>
+
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">Selecciona tu medio de pago:</p>
+        <div class="pay-methods">
+            <button class="pay-btn active" id="btn-yape" onclick="selectMetodo('yape')"><i class="fa-solid fa-mobile-screen-button"></i> Yape</button>
+            <button class="pay-btn" id="btn-efectivo" onclick="selectMetodo('efectivo')"><i class="fa-solid fa-money-bill-wave"></i> Efectivo</button>
+        </div>
+
+        <div id="yape-fields">
+            <input type="text" class="input-pay" placeholder="Número de celular de tu Yape">
+            <input type="text" class="input-pay" placeholder="Código de aprobación (6 dígitos)">
+        </div>
+
+        <button class="btn-confirm" onclick="confirmarCompra()">CONFIRMAR COMPRA</button>
+        <button onclick="cerrarModal()" style="width: 100%; background: none; border: none; color: #94a3b8; margin-top: 15px; cursor: pointer; text-decoration: underline;">CANCELAR</button>
+    </div>
+</div>
+
+<div id="modal-historial" class="modal-box">
+    <div class="modal-content" style="max-width: 520px;">
+        <div class="tabs-historial">
+            <button id="tab-compras-btn" class="tab-btn active" onclick="cambiarTabHistorial('compras')">COMPRAS</button>
+            <button id="tab-cupones-btn" class="tab-btn" onclick="cambiarTabHistorial('cupones')">CUPONES</button>
+        </div>
+
+        <div id="panel-tab-compras">
+            <h3 style="margin-bottom: 15px; font-size:16px;">Historial de Transacciones</h3>
+            <div id="lista-compras-render" style="display: flex; flex-direction: column; gap: 10px;">
+            </div>
+        </div>
+
+        <div id="panel-tab-cupones" style="display: none;">
+            <h3 style="margin-bottom: 10px; font-size:16px;">Canjear Código Promocional</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Introduce el código promocional para activar tu beneficio único en el checkout.</p>
+            <input type="text" id="input-codigo-promocional" class="input-pay" placeholder="EJ: CINESCAPE" style="text-transform: uppercase;">
+            <button class="btn-confirm" style="background: #3b82f6;" onclick="validarCodigoCupon()">VALIDAR CÓDIGO</button>
+
+            <div id="mensaje-cupon-activo" style="display:none; margin-top:15px; padding:12px; background:rgba(22,163,74,0.2); border:1px solid #16a34a; border-radius:8px; color:#4ade80; font-size:13px; text-align:center;">
+                <b>✓ Cupón Activo:</b> Tienes un 30% de descuento en tu próxima compra de entradas o dulcería. (Cupón de un solo uso).
+            </div>
+        </div>
+
+        <button class="btn-confirm" style="margin-top:20px; background:#161d33;" onclick="cerrarHistorial()">CERRAR VENTANA</button>
+    </div>
+</div>
+
+<div class="footer-bar" onclick="abrirHistorial()">
+    <i class="fa-solid fa-basket-shopping"></i> MIS COMPRAS / CUPONES
+</div>
+
+<div id="sidebar" class="sidebar">
+    <button class="sidebar-close" onclick="toggleMenu()">&times;</button>
+    <a href="#" onclick="mostrarSeccion('cartelera')"><i class="fa-solid fa-film"></i> Películas</a>
+    <a href="#" onclick="mostrarSeccion('dulceria')"><i class="fa-solid fa-candy-cane"></i> Dulcería (Cinescape)</a>
+    <a href="#" onclick="toggleAdmin()"><i class="fa-solid fa-user-gear"></i> Modo Admin</a>
+    <a href="#" onclick="cerrarSesionGlobal()" style="margin-top: auto; color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Salir</a>
+</div>
+<div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+<script>
+    // Variables de configuración de la orden
+    let qtyAdulto = 1;
+    let qtyNino = 0;
+    let qtyMayor = 0;
+    let qtyDulceria = 1;
+
+    let precioBasePelicula = 30.00;
+    let precioUnitarioDulce = 0.00;
+    let peliculaActual = "";
+    let esSalaPrivada = false;
+    let esCompraDulceria = false;
+    let montoSubtotalCalculado = 0;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const sesionActiva = localStorage.getItem('socio_dni') || localStorage.getItem('socio_nombre');
+        if (sesionActiva) {
+            document.getElementById('user-display').innerText = sesionActiva;
+        }
+        inicializarEstructurasCompras();
+    });
+
+    function inicializarEstructurasCompras() {
+        if(!localStorage.getItem('bd_compras_cine')) {
+            localStorage.setItem('bd_compras_cine', JSON.stringify([]));
+        }
+    }
+
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    function mostrarSeccion(sec) {
+        if(sec === 'cartelera') {
+            document.getElementById('sec-cartelera').style.display = 'block';
+            document.getElementById('sec-dulceria').style.display = 'none';
+        } else if(sec === 'dulceria') {
+            document.getElementById('sec-cartelera').style.display = 'none';
+            document.getElementById('sec-dulceria').style.display = 'block';
+        }
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('overlay').classList.remove('active');
+    }
+
+    function toggleAdmin() {
+        toggleMenu();
+        const panel = document.getElementById('admin-panel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Apertura Flujo de Boletos
+    function abrirCompra(titulo, precio, sala = false) {
+        const sesionActiva = localStorage.getItem('socio_dni') || localStorage.getItem('socio_nombre');
+        if (!sesionActiva) { mostrarVista('login'); document.getElementById('modal-login').style.display = 'flex'; return; }
+
+        peliculaActual = titulo;
+        precioBasePelicula = precio;
+        esSalaPrivada = sala;
+        esCompraDulceria = false;
+
+        qtyAdulto = 1; qtyNino = 0; qtyMayor = 0;
+
+        document.getElementById('compra-titulo').innerText = titulo;
+        document.getElementById('precio-adulto').innerText = `S/ ${precio.toFixed(2)}`;
+        document.getElementById('contenedor-tipo-entradas').style.display = sala ? 'none' : 'block';
+        document.getElementById('contenedor-cantidad-dulceria').style.display = 'none';
+
+        evaluarDisponibilidadCuponBox();
+        actualizarTotal();
+        document.getElementById('modal-compra').style.display = 'flex';
+    }
+
+    // Apertura Flujo Dulcería Corregida con cantidades independientes
+    function abrirCompraDulceria(nombreCombo, precio) {
+        const sesionActiva = localStorage.getItem('socio_dni') || localStorage.getItem('socio_nombre');
+        if (!sesionActiva) { mostrarVista('login'); document.getElementById('modal-login').style.display = 'flex'; return; }
+
+        peliculaActual = "Dulcería: " + nombreCombo;
+        precioUnitarioDulce = precio;
+        qtyDulceria = 1; // Resetea a 1 al abrir
+        esSalaPrivada = false;
+        esCompraDulceria = true;
+
+        document.getElementById('compra-titulo').innerText = nombreCombo;
+        document.getElementById('precio-unitario-dulce').innerText = `S/ ${precio.toFixed(2)}`;
+        document.getElementById('qty-dulceria-val').innerText = qtyDulceria;
+
+        document.getElementById('contenedor-tipo-entradas').style.display = 'none';
+        document.getElementById('contenedor-cantidad-dulceria').style.display = 'block';
+
+        evaluarDisponibilidadCuponBox();
+        actualizarTotal();
+        document.getElementById('modal-compra').style.display = 'flex';
+    }
+
+    function evaluarDisponibilidadCuponBox() {
+        const cuponValido = localStorage.getItem('cupon_cinescape_disponible') === 'true';
+        document.getElementById('box-cupon-aplicar').style.display = cuponValido ? 'block' : 'none';
+        document.getElementById('chk-usar-cupon').checked = false;
+    }
+
+    function cambiarMultiQty(tipo, delta) {
+        if (tipo === 'adulto') qtyAdulto = Math.max(0, qtyAdulto + delta);
+        if (tipo === 'nino') qtyNino = Math.max(0, qtyNino + delta);
+        if (tipo === 'mayor') qtyMayor = Math.max(0, qtyMayor + delta);
+
+        document.getElementById('qty-adulto').innerText = qtyAdulto;
+        document.getElementById('qty-nino').innerText = qtyNino;
+        document.getElementById('qty-mayor').innerText = qtyMayor;
+        actualizarTotal();
+    }
+
+    // Cambiar cantidad en Dulcería (+ / -)
+    function cambiarQtyDulceria(delta) {
+        qtyDulceria = Math.max(1, qtyDulceria + delta);
+        document.getElementById('qty-dulceria-val').innerText = qtyDulceria;
+        actualizarTotal();
+    }
+
+    function actualizarTotal() {
+        if (esCompraDulceria) {
+            montoSubtotalCalculado = qtyDulceria * precioUnitarioDulce;
+        } else {
+            if (esSalaPrivada) {
+                montoSubtotalCalculado = 450.00;
+            } else {
+                montoSubtotalCalculado = (qtyAdulto * precioBasePelicula) + (qtyNino * 20.00) + (qtyMayor * 25.00);
+            }
+        }
+
+        let totalFinal = montoSubtotalCalculado;
+        if(document.getElementById('chk-usar-cupon').checked) {
+            totalFinal = montoSubtotalCalculado * 0.70; // Aplica 30% Descuento
+        }
+
+        document.getElementById('monto-total').innerText = `S/ ${totalFinal.toFixed(2)}`;
+    }
+
+    function confirmarCompra() {
+        let totalFinal = montoSubtotalCalculado;
+        const cuponAplicado = document.getElementById('chk-usar-cupon').checked;
+
+        if (cuponAplicado) {
+            totalFinal = montoSubtotalCalculado * 0.70;
+        }
+
+        if (totalFinal === 0) { alert("Configure los elementos de su compra primero."); return; }
+
+        const usuarioComprador = localStorage.getItem('socio_nombre') || localStorage.getItem('socio_dni') || "Socio Anonimo";
+        const ahora = new Date();
+        const strFecha = ahora.toLocaleDateString();
+        const strHora = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        // Modifica el título de registro si se compran múltiples unidades
+        let descripcionItem = peliculaActual;
+        if (esCompraDulceria && qtyDulceria > 1) {
+            descripcionItem = `${qtyDulceria}x ${peliculaActual.replace('Dulcería: ', '')}`;
+        }
+
+        const ticketCompra = {
+            usuario: usuarioComprador,
+            item: descripcionItem,
+            total: totalFinal.toFixed(2),
+            fecha: strFecha,
+            hora: strHora,
+            descuentoAplicado: cuponAplicado ? "30% (Cupón CINESCAPE)" : "Ninguno"
+        };
+
+        let historico = JSON.parse(localStorage.getItem('bd_compras_cine')) || [];
+        historico.push(ticketCompra);
+        localStorage.setItem('bd_compras_cine', JSON.stringify(historico));
+
+        if(cuponAplicado) {
+            localStorage.removeItem('cupon_cinescape_disponible'); // Quema el cupón de un solo uso
+        }
+
+        alert(`¡Compra Exitosa!\nRegistrado en Mis Compras.\nTotal: S/ ${totalFinal.toFixed(2)}`);
+        cerrarModal();
+        renderizarListaHistorial();
+    }
+
+    // Mecánica de validación de Cupones
+    function validarCodigoCupon() {
+        const codigo = document.getElementById('input-codigo-promocional').value.trim().toUpperCase();
+        if(codigo === "CINESCAPE") {
+            localStorage.setItem('cupon_cinescape_disponible', 'true');
+            document.getElementById('mensaje-cupon-activo').style.display = 'block';
+            alert("¡Código Promocional Activado!\nSe ha guardado un 30% de descuento para utilizarlo en tus Entradas o Dulcería.");
+        } else {
+            alert("Código inválido. Intenta con un código de prueba correcto.");
+        }
+    }
+
+    function renderizarListaHistorial() {
+        const cont = document.getElementById('lista-compras-render');
+        cont.innerHTML = "";
+        let historico = JSON.parse(localStorage.getItem('bd_compras_cine')) || [];
+
+        if(historico.length === 0) {
+            cont.innerHTML = `<p style="text-align:center; color:#64748b; font-size:14px; padding:20px;">No registras compras en tu cuenta.</p>`;
+            return;
+        }
+
+        historico.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'purchase-card';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <b>${c.item}</b>
+                    <b style="color:#ff0055;">S/ ${c.total}</b>
+                </div>
+                <div style="font-size:12px; color:#94a3b8;">Socio: ${c.usuario}</div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                    <span><i class="fa-solid fa-calendar-day"></i> ${c.fecha}</span>
+                    <span><i class="fa-solid fa-clock"></i> ${c.hora}</span>
+                </div>
+            `;
+            cont.appendChild(div);
+        });
+    }
+
+    function cambiarTabHistorial(tab) {
+        if(tab === 'compras') {
+            document.getElementById('tab-compras-btn').classList.add('active');
+            document.getElementById('tab-cupones-btn').classList.remove('active');
+            document.getElementById('panel-tab-compras').style.display = 'block';
+            document.getElementById('panel-tab-cupones').style.display = 'none';
+        } else {
+            document.getElementById('tab-compras-btn').classList.remove('active');
+            document.getElementById('tab-cupones-btn').classList.add('active');
+            document.getElementById('panel-tab-compras').style.display = 'none';
+            document.getElementById('panel-tab-cupones').style.display = 'block';
+
+            const cuponValido = localStorage.getItem('cupon_cinescape_disponible') === 'true';
+            document.getElementById('mensaje-cupon-activo').style.display = cuponValido ? 'block' : 'none';
+        }
+    }
+
+    function abrirHistorial() {
+        renderizarListaHistorial();
+        cambiarTabHistorial('compras');
+        document.getElementById('modal-historial').style.display = 'flex';
+    }
+
+    function cerrarHistorial() { document.getElementById('modal-historial').style.display = 'none'; }
+    function mostrarVista(vista) {
+        document.getElementById('view-login').style.display = vista === 'login' ? 'block' : 'none';
+        document.getElementById('view-register').style.display = vista === 'register' ? 'block' : 'none';
+    }
+
+    function procesarLoginGlobal() {
+        const dni = document.getElementById('login-documento').value.trim();
+        if (dni === "") { alert("Por favor, rellene todos los campos."); return; }
+        localStorage.setItem('socio_dni', dni);
+        document.getElementById('user-display').innerText = dni;
+        cerrarLogin();
+    }
+
+    function procesarRegistroGlobal() {
+        const nombres = document.getElementById('reg-nombres').value.trim();
+        if (nombres === "") { alert("Por favor, complete todos los campos."); return; }
+        localStorage.setItem('socio_nombre', nombres);
+        document.getElementById('user-display').innerText = nombres;
+        cerrarLogin();
+    }
+
+    function cerrarLogin() { document.getElementById('modal-login').style.display = 'none'; }
+    function cerrarModal() { document.getElementById('modal-compra').style.display = 'none'; }
+
+    function cerrarSesionGlobal() {
+        localStorage.removeItem('socio_dni');
+        localStorage.removeItem('socio_nombre');
+        document.getElementById('user-display').innerText = "Socio Cineplanet";
+        toggleMenu();
+        alert("Sesión cerrada.");
+    }
+
+    function cambiarProvincia(nombreProvincia, elemento) {
+        document.querySelectorAll('.provincia-btn').forEach(btn => btn.classList.remove('active'));
+        elemento.classList.add('active');
+        document.querySelectorAll('.movie-card').forEach(card => card.classList.remove('not-available'));
+
+        if (nombreProvincia === 'Arequipa') {
+            document.getElementById('movie-badboys').classList.add('not-available');
+            document.getElementById('movie-quietplace').classList.add('not-available');
+        } else if (nombreProvincia === 'Chiclayo') {
+            document.getElementById('movie-ts5').classList.add('not-available');
+            document.getElementById('movie-minions').classList.add('not-available');
+        } else if (nombreProvincia === 'Trujillo') {
+            document.getElementById('movie-insideout').classList.add('not-available');
+        }
+    }
+
+    function selectMetodo(m) {
+        document.getElementById('btn-yape').classList.toggle('active', m === 'yape');
+        document.getElementById('btn-efectivo').classList.toggle('active', m === 'efectivo');
+        document.getElementById('yape-fields').style.display = m === 'yape' ? 'block' : 'none';
+    }
+
+    function checkSala() {
+        const h = new Date().getHours();
+        const btn = document.getElementById('btn-privada');
+        if (btn) {
+            if (h >= 9 && h < 12) {
+                btn.disabled = false;
+                btn.innerText = "RESERVAR SALA";
+            } else {
+                btn.disabled = true;
+                btn.innerText = "SALA PRIVADA (Solo de 9 AM a 12 PM)";
+            }
+        }
+    }
+    setInterval(checkSala, 1000);
+    checkSala();
+</script>
+</body>
+</html>
